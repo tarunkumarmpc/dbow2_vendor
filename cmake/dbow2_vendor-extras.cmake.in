@@ -1,0 +1,33 @@
+include(CMakeFindDependencyMacro)
+find_dependency(OpenCV REQUIRED)
+
+get_filename_component(_dbow2_vendor_prefix "${CMAKE_CURRENT_LIST_DIR}/../../.." ABSOLUTE)
+
+set(_dbow2_vendor_include_dir "${_dbow2_vendor_prefix}/include")
+set(_dbow2_vendor_lib "")
+
+if(EXISTS "${_dbow2_vendor_prefix}/lib/libDBoW2.so")
+  set(_dbow2_vendor_lib "${_dbow2_vendor_prefix}/lib/libDBoW2.so")
+elseif(EXISTS "${_dbow2_vendor_prefix}/lib/libDBoW2.dylib")
+  set(_dbow2_vendor_lib "${_dbow2_vendor_prefix}/lib/libDBoW2.dylib")
+elseif(EXISTS "${_dbow2_vendor_prefix}/lib/libDBoW2.a")
+  set(_dbow2_vendor_lib "${_dbow2_vendor_prefix}/lib/libDBoW2.a")
+endif()
+
+if(_dbow2_vendor_lib AND NOT TARGET dbow2_vendor::DBoW2)
+  add_library(dbow2_vendor::DBoW2 UNKNOWN IMPORTED GLOBAL)
+  set_target_properties(dbow2_vendor::DBoW2 PROPERTIES
+    IMPORTED_LOCATION "${_dbow2_vendor_lib}"
+    INTERFACE_INCLUDE_DIRECTORIES "${_dbow2_vendor_include_dir}"
+    INTERFACE_LINK_LIBRARIES "${OpenCV_LIBS}"
+  )
+endif()
+
+set(dbow2_vendor_INCLUDE_DIRS "${_dbow2_vendor_include_dir}")
+if(TARGET dbow2_vendor::DBoW2)
+  set(dbow2_vendor_LIBRARIES dbow2_vendor::DBoW2)
+elseif(_dbow2_vendor_lib)
+  set(dbow2_vendor_LIBRARIES "${_dbow2_vendor_lib}")
+else()
+  message(FATAL_ERROR "dbow2_vendor could not resolve libDBoW2 under ${_dbow2_vendor_prefix}/lib")
+endif()
